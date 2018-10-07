@@ -9,9 +9,10 @@
 import UIKit
 import AVFoundation
 
-class ViewController: UIViewController
+class XylophoneViewController: UIViewController, AVAudioPlayerDelegate
 {
-  private lazy var playerNotes = [AVAudioPlayer?]()
+  private var audioPlayer = [AVAudioPlayer?]()
+  private var soundArray = [URL?]()
 
   override func viewDidLoad()
   {
@@ -19,30 +20,44 @@ class ViewController: UIViewController
 
     for index in 1...7
     {
-      let url = Bundle.main.url(forResource: "note" + String(index), withExtension: "wav")!
-      do
-      {
-        let player = try AVAudioPlayer(contentsOf: url)
-        playerNotes.append(player)
-      }
-      catch let error
-      {
-        print(error.localizedDescription + " error loading \(url)")
-        playerNotes.append(nil)
-      }
+      let noteName = "note" + String(index)
+      let url = Bundle.main.url(forResource: noteName, withExtension: "wav")
+      soundArray.append(url)
     }
+  }
+
+  func clearSounds()
+  {
+    for player in audioPlayer
+    {
+      player?.stop()
+    }
+    audioPlayer.removeAll()
   }
 
   @IBAction func notePressed(_ sender: UIButton)
   {
-    guard let player = playerNotes[sender.tag - 1]
-    else
+    if let url = soundArray[sender.tag - 1]
     {
-      return
+      do
+      {
+        let player = try AVAudioPlayer(contentsOf: url)
+        audioPlayer.append(player)
+        player.play()
+      }
+      catch let error
+      {
+        print(error.localizedDescription + " error loading \(url)")
+      }
     }
+  }
 
-    player.prepareToPlay()
-    player.play()
+  func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool)
+  {
+    if let index = audioPlayer.index(of: player)
+    {
+      audioPlayer.remove(at: index)
+    }
   }
 }
 
